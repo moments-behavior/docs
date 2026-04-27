@@ -1,0 +1,7 @@
+/* Custom palette tuned to match social_preview.png (sage olive ground).
+   Selector matches Material's per-color scheme so it wins the cascade. */
+[data-md-color-primary="green"] {
+  --md-primary-fg-color:        #7E9C5E;
+  --md-primary-fg-color--light: #A4BB7A;
+  --md-primary-fg-color--dark:  #5D7842;
+}

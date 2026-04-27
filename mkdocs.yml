@@ -1,0 +1,80 @@
+site_name: moments-behavior
+site_description: Multi-camera capture, recording, and labeling tools for behavioral neuroscience
+site_url: https://moments-behavior.github.io/
+repo_url: https://github.com/moments-behavior
+edit_uri: ""
+
+theme:
+  name: material
+  logo: assets/avatar.png
+  favicon: assets/avatar.png
+  palette:
+    - scheme: default
+      primary: green
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: green
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - orange:
+      - orange/index.md
+      - Installation:
+          - orange/installation/index.md
+          - CUDA & Emergent SDK: orange/installation/cuda-esdk.md
+          - FFmpeg: orange/installation/ffmpeg.md
+          - OpenCV: orange/installation/opencv.md
+          - TensorRT: orange/installation/tensorrt.md
+          - Build orange: orange/installation/build.md
+      - Clonezilla image: orange/clonezilla.md
+      - Configuration: orange/configuration.md
+      - Local mode: orange/local-mode.md
+      - Network mode: orange/network-mode.md
+      - Real-time detection: orange/realtime-detection.md
+      - PTP setup: orange/ptp.md
+  - red:
+      - red/index.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/moments-behavior
