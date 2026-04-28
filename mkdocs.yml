@@ -35,6 +35,7 @@ theme:
 
 nav:
   - Home: index.md
+  - End-to-end walkthrough: walkthrough.md
   - orange:
       - orange/index.md
       - Installation:
