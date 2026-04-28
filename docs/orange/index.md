@@ -10,6 +10,14 @@ A high-performance, GPU-accelerated multi-camera capture, streaming and recordin
 
 [Source on GitHub](https://github.com/moments-behavior/orange) · [Video demo](https://youtu.be/ahceluqBYj8)
 
+## Features
+
+1. Multiple cameras streaming
+2. PTP synchronization
+3. GPU accelerated encoding (h264, hevc)
+4. Support mono and color Emergent cameras
+5. Multi-host capture (one GUI host coordinating several headless `cam_server` nodes)
+
 ## Performance
 
 Encoding performance using a **single** A6000 GPU with a 7MP Emergent camera:

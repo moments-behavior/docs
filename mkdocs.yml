@@ -52,6 +52,13 @@ nav:
       - PTP setup: orange/ptp.md
   - red:
       - red/index.md
+      - Installation:
+          - red/installation/index.md
+          - cuDNN: red/installation/cudnn.md
+          - LibTorch: red/installation/libtorch.md
+          - Build red: red/installation/build.md
+      - Configuration: red/configuration.md
+      - Data export: red/data-export.md
 
 markdown_extensions:
   - admonition
