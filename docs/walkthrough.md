@@ -1,23 +1,23 @@
 # End-to-end walkthrough
 
-This page walks one example rig from a blank machine to a trained detection model running live in `orange`. The goal is to show how `orange` and `red` fit together — not to replace the per-project docs.
+This page walks one example rig from a blank machine to a trained 3D pose model. The goal is to show how `orange` and `red` fit together.
 
-The example rig is a **single host with 4 Emergent cameras**, recording a 30-second session, labeling frames in `red`, and either (A) training a YOLO detection model and running it live in `orange`, or (B) training a JARVIS-HybridNet 3D pose model and running it offline.
-
-> If you're running a multi-host rig instead, see [Network mode](orange/network-mode.md) for the differences — the rest of this walkthrough is unchanged.
+The example rig is **17 Emergent cameras spread across 1 GUI host and 2 capture servers**, recording at **180 fps**, labeling rat poses in `red`, and training a **JARVIS-HybridNet** 3D pose model on the result.
 
 ---
 
 ## 1. Prerequisites
 
-Before starting, you need a Linux host that meets [orange's system requirements](orange/installation/index.md): NVIDIA GPU with NVENC, kernel 6.5, Ubuntu 22.04.4. Cameras connected to the Emergent NIC and reachable from `eCapture`.
+Before starting, every host needs to meet [orange's system requirements](orange/installation/index.md): NVIDIA GPU with NVENC, kernel 6.5, Ubuntu 22.04.4. Cameras connected to the Emergent NIC and reachable from `eCapture`.
 
-You also need both apps built:
+You also need both apps built (on the GUI host at minimum):
 
 - [Build orange](orange/installation/build.md)
 - [Build red](red/installation/build.md)
 
-PTP set up:
+Each capture server needs `cam_server` built (see `server_build.sh` in the orange repo).
+
+PTP set up across all hosts and switches:
 
 - [PTP setup](orange/ptp.md)
 
@@ -25,39 +25,81 @@ PTP set up:
 
 ## 2. Configure cameras and record a session in orange
 
-### 2a. Create a camera config preset
+This rig is multi-host, so it runs `orange` in **network mode**. Full details: [Network mode](orange/network-mode.md).
 
-In `~/orange_data/config/local/`, create a folder for your rig (e.g. `4cam_demo/`). Drop one JSON per camera, named after its serial. Start from the [example](https://github.com/moments-behavior/orange/blob/main/config/2002496.json.example) and adjust per-camera settings.
+### 2a. Create a config preset on every host
 
-> *TODO: paste your serials and a representative camera JSON here.*
+On the GUI host **and** each capture server, create the matching preset folder:
 
-### 2b. Launch orange
+```
+~/orange_data/config/network/arena/
+├── <serial-1>.json
+├── <serial-2>.json
+├── ...
+└── <serial-17>.json
+```
+
+One JSON per camera, named after its serial. Start from the [example](https://github.com/moments-behavior/orange/blob/main/config/2002496.json.example) and adjust per-camera settings (resolution, exposure, `gpu_id`, etc.).
+
+> *TODO: paste a representative camera JSON for the arena rig (180 fps settings, etc.).*
+
+The contents can be identical across all hosts — each `cam_server` will only open the cameras physically attached to its host and silently ignore the rest.
+
+### 2b. Create `endpoints.json` on the GUI host
+
+`~/orange_data/config/network/endpoints.json` lists the two capture servers:
+
+```json
+{
+  "default_port": 34001,
+  "servers": [
+    { "name": "waffle-0", "host": "192.168.20.60" },
+    { "name": "waffle-1", "host": "192.168.20.61" }
+  ]
+}
+```
+
+> *TODO: replace with the actual hostnames / IPs of the arena servers.*
+
+### 2c. Start `cam_server` on each capture host
+
+```bash
+sudo release/cam_server <hostname>      # or: ./start_server.sh
+```
+
+Both servers must be running **before** the GUI launches.
+
+### 2d. Launch orange on the GUI host
 
 ```bash
 cd ~/src/orange
 ./run.sh
 ```
 
-In the GUI, pick the `4cam_demo` preset and open the cameras.
+In the GUI, pick the `arena` preset and open the cameras. The GUI connects to both servers, pushes the preset name, and each server opens its locally-attached cameras.
 
-### 2c. Verify PTP and cameras
+### 2e. Verify PTP and cameras
 
-> *TODO: screenshot of orange GUI with 4 cameras streaming + PTP offsets near zero.*
+> *TODO: screenshot of orange GUI with all 17 cameras streaming + PTP offsets near zero.*
 
-### 2d. Record
+### 2f. Record
 
-Set a save folder (defaults to `~/orange_data/exp/unsorted/<timestamp>/`), start recording, run the trial for ~30 seconds, stop.
+Set a save folder (defaults to `~/orange_data/exp/unsorted/<timestamp>/`), start recording, run the trial, stop.
+
+> *TODO: confirm typical session length for the arena rig at 180 fps.*
 
 You should now have:
 
 ```
 orange_data/exp/unsorted/2026_04_28_HHMMSS/
-├── Cam<serial1>_meta.csv
-├── Cam<serial1>.mp4
-├── Cam<serial2>_meta.csv
-├── Cam<serial2>.mp4
+├── Cam<serial-1>_meta.csv
+├── Cam<serial-1>.mp4
+├── Cam<serial-2>_meta.csv
+├── Cam<serial-2>.mp4
 ├── ...
 ```
+
+per host (each capture server writes its own cameras to its local disk).
 
 ---
 
@@ -65,7 +107,7 @@ orange_data/exp/unsorted/2026_04_28_HHMMSS/
 
 Multi-view triangulation in `red` requires camera intrinsics + extrinsics. Run the calibration capture in `orange` once per rig.
 
-> *TODO: brief checkerboard procedure — what board, how many poses, what to expect in `~/orange_data/calib_yaml/`.*
+> *TODO: brief checkerboard procedure — board size, how many poses, what to expect in `~/orange_data/calib_yaml/`.*
 
 Calibration produces a YAML per camera plus a combined `calib.yaml` consumed by `red`.
 
@@ -73,142 +115,90 @@ Calibration produces a YAML per camera plus a combined `calib.yaml` consumed by 
 
 ## 4. Open the recording in red
 
+Bring all 17 cameras' recordings together (e.g. via NFS or by copying off each capture server) so `red` can open them as one project.
+
 ```bash
 cd ~/src/red
 ./run.sh
 ```
 
-In the GUI, **File → Open project** → point at the recording folder from step 2d.
+In the GUI, **File → Open project** → point at the recording folder.
 
-> *TODO: screenshot of red opening a 4-camera recording.*
-
-`red` supports two labeling flows. Pick one based on what you need downstream:
-
-| Flow            | What you label                       | Used for                                          |
-| --------------- | ------------------------------------ | ------------------------------------------------- |
-| **A. 2D bboxes**   | A bounding box per object, per frame | YOLO object detection — runs **live in orange** as real-time detection. Simpler, faster to label. |
-| **B. 3D keypoints** | Multi-view keypoints with a skeleton | 3D pose, used **offline** with JARVIS HybridNet. More involved labeling, richer output. |
-
-Many projects do A first (cheap to set up, useful immediately) and add B later. The remainder of this walkthrough covers both paths in parallel; sections marked **A** apply only to bboxes, **B** only to 3D keypoints.
+> *TODO: screenshot of red opening a 17-camera recording.*
 
 ---
 
-## 5A. Label bounding boxes (for YOLO detection)
+## 5. Label 3D rat poses
 
-Pick ~30 frames spaced across the recording. For each frame, draw a bounding box around your object of interest in **each camera view that sees it**. No skeleton or keypoint setup needed.
+### 5a. Author the skeleton
 
-> *TODO: brief instructions for entering bbox-labeling mode in red + screenshot.*
+`red` uses a `skeleton.json` to define the keypoints and edges. The repo ships an example at [`example/skeleton.json`](https://github.com/moments-behavior/red/blob/main/example/skeleton.json) — adapt it for the rat keypoints you want to track.
 
-Save the project (`File → Save`).
+> *TODO: brief description of the skeleton authoring UI in red, or instructions to edit the JSON directly. Mention typical rat keypoint set used in the arena rig.*
 
-## 5B. Label 3D keypoints (for JARVIS)
+### 5b. Label keypoints across views
 
-### 5B-i. Author the skeleton
+Pick frames spaced across the recording. For each frame, click each keypoint in **at least 2 camera views**. `red` triangulates the 3D position automatically and projects it back into all 17 views.
 
-`red` uses a `skeleton.json` to define the keypoints and edges you'll label. The repo ships an example at [`example/skeleton.json`](https://github.com/moments-behavior/red/blob/main/example/skeleton.json).
+With 17 cameras you don't need to label more than 2–3 views per keypoint — pick the views where the rat is least occluded for that frame.
 
-> *TODO: brief description of the skeleton authoring UI in red, or instructions to edit the JSON directly.*
-
-### 5B-ii. Label keypoints across views
-
-Pick ~30 frames spaced across the recording. For each frame, click each keypoint in **at least 2 camera views**. `red` triangulates the 3D position automatically.
-
-> *TODO: screenshot of red labeling a keypoint across 4 views with the triangulated 3D point overlay.*
+> *TODO: target frame count for an initial JARVIS dataset (~50? ~100?).*
+>
+> *TODO: screenshot of red labeling a keypoint across the 17 views with the triangulated 3D point overlay.*
 
 Save the project (`File → Save`).
 
-### 5B-iii. Verify labels
+### 5c. Verify labels
 
-> *TODO: how to scrub through the labeled frames and visually verify triangulation looks right.*
+> *TODO: how to scrub through the labeled frames and visually verify triangulation looks right across all 17 views.*
 
 ---
 
-## 6. Export labels for training
+## 6. Export for JARVIS
 
-Use `red`'s exporter scripts. Full reference: [Data export](red/data-export.md).
-
-### 6A. Export YOLO detection (bboxes)
+Use the JARVIS exporter from `red`'s `data_exporter/`. Full reference: [Data export](red/data-export.md).
 
 ```bash
 cd ~/src/red/data_exporter
 conda activate red_exporter
-python export_yolo_detection.py \
-    -i ~/orange_data/labeled \
-    -v ~/orange_data/exp/unsorted/2026_04_28_HHMMSS \
-    -o ~/datasets/4cam_demo_det \
-    -c class_names.txt
-```
-
-Result: a YOLO detection dataset with train/val/test splits and `data.yaml`.
-
-### 6B. Export 3D pose for JARVIS
-
-```bash
 python red3d2jarvis.py \
     -w ~/orange_data \
-    -o ~/datasets/4cam_demo_jarvis \
+    -o ~/datasets/arena_jarvis \
     -m 60
 ```
 
+`-m` is the bounding-box margin (in calibration units, typically mm). Adjust for the rat size.
+
 ---
 
-## 7. Train
-
-This step happens outside `orange` / `red`.
-
-### 7A. Train YOLO detection
-
-```bash
-cd ~/src/YOLOv8-TensorRT
-source .venv/bin/activate
-yolo task=detect mode=train model=yolov8m.pt data=~/datasets/4cam_demo_det/data.yaml epochs=100 imgsz=640
-```
-
-Result: `runs/detect/train/weights/best.pt`.
-
-### 7B. Train a JARVIS HybridNet model
+## 7. Train a JARVIS HybridNet model
 
 Follow the [JARVIS-HybridNet](https://github.com/JARVIS-MoCap/JARVIS-HybridNet) training docs.
 
+> *TODO: any project-specific training tips — typical epochs, GPU memory, batch size for 17-camera setup.*
+
 ---
 
-## 8A. Compile the engine and run real-time detection in orange
+## 8. Run JARVIS inference and view results back in red
 
-This section applies to **flow A (YOLO detection)**. Convert `.pt` → `.onnx` → `.engine`. Detail: [Real-time detection](orange/realtime-detection.md).
+Run JARVIS-HybridNet inference on the recorded videos with its own inference scripts.
 
-```bash
-python3 export-det.py --weights best.pt --opset 11 --sim --device cuda:0
-~/nvidia/TensorRT/bin/trtexec --onnx=best.onnx --saveEngine=best.engine --device=0 --fp16
-```
-
-!!! warning "Match TensorRT versions"
-    The Python `tensorrt` wheel here must match the runtime version `orange` was built against. See [TensorRT installation](orange/installation/tensorrt.md).
-
-Drop the engine where `orange` looks for it:
+To visualize the predictions in `red`, convert them back with `jarvis2red3d.py`:
 
 ```bash
-cp best.engine ~/orange_data/detect/best.engine
+python jarvis2red3d.py \
+    -i /path/to/predictions_3D_folder/ \
+    -s arena \
+    -o /path/to/output_folder
 ```
 
-Set every camera's `gpu_id` in `~/orange_data/config/local/4cam_demo/*.json` to the GPU you compiled the engine for, then relaunch:
+Then open the output folder in `red` and scrub through the predicted poses across all 17 views — useful for spot-checking and finding error frames to relabel.
 
-```bash
-cd ~/src/orange
-./run.sh
-```
-
-In the GUI, enable detection. You should see the YOLO predictions overlaid on the live camera streams.
-
-> *TODO: screenshot of orange with live detection overlays.*
-
-## 8B. Run JARVIS offline
-
-Flow B is typically used **offline** rather than fed back into `orange` real-time. Run inference with JARVIS-HybridNet on the recorded videos using its own inference scripts. To visualize JARVIS predictions back in `red`, use `jarvis2red3d.py` — see [Data export → Load JARVIS predictions back into red](red/data-export.md#load-jarvis-predictions-back-into-red).
+A confidence filter is on by default (drops predictions below 0.7 confidence and z > 500 mm). Disable with `--filter=0`.
 
 ---
 
 ## What's next
 
-- Recording longer sessions and adding more labeled frames to either dataset.
-- Multi-host capture: see [Network mode](orange/network-mode.md).
-- Combining flows: label bboxes for fast real-time triage in `orange`, then re-label a subset with 3D keypoints for offline analysis.
+- Adding the **YOLO real-time detection** path so an animal-bbox model runs live during capture in `orange`. See [Real-time detection](orange/realtime-detection.md).
+- Different downstream pipelines: see the YOLO pose option in [Data export](red/data-export.md).
