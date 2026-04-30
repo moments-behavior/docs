@@ -29,9 +29,7 @@ red_labeling_example/
 ├── calibration/
 │   ├── <serial-1>.yaml
 │   ├── ...
-│   └── calib.yaml
 ├── movies/
-│   ├── Cam<serial-1>_meta.csv
 │   ├── Cam<serial-1>.mp4
 │   └── ...
 ```
