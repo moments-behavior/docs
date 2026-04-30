@@ -1,6 +1,6 @@
 # Network mode
 
-For multi-host capture, the GUI host runs `orange` and each capture host runs `release/cam_server <hostname>` (or `start_server.sh` on hosts whose names match `waffle-N`). Communication is over ENet using a FlatBuffers control protocol (schema in [`schema/ctrl.fbs`](https://github.com/moments-behavior/orange/blob/main/schema/ctrl.fbs)).
+For multi-host capture, the GUI host runs `orange` and each capture host runs `release/cam_server <hostname>` (or `start_server.sh`, which auto-detects the host's short hostname; override with `CAM_SERVER_NAME`). Communication is over ENet using a FlatBuffers control protocol (schema in [`schema/ctrl.fbs`](https://github.com/moments-behavior/orange/blob/main/schema/ctrl.fbs)).
 
 ## Important caveats
 

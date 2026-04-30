@@ -8,7 +8,15 @@ A high-performance, GPU-accelerated multi-camera capture, streaming and recordin
 
 `orange` is built for high-throughput, time-synchronized multi-camera recording. Encoding is GPU-accelerated and scales with the number of GPUs in the host. PTP keeps cameras aligned to sub-frame precision, and a multi-host architecture (one GUI host coordinating any number of headless `cam_server` nodes over ENet) lets a recording rig scale beyond what a single machine can drive — both in camera count and aggregate pixel rate. Optional TensorRT-based YOLO detection runs on the live streams when a model is provided.
 
-[Source on GitHub](https://github.com/moments-behavior/orange) · [Video demo](https://youtu.be/ahceluqBYj8)
+[Source on GitHub](https://github.com/moments-behavior/orange)
+
+## Video demo
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0;">
+  <iframe src="https://www.youtube.com/embed/QZ5ri9SWgEc"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    frameborder="0" allowfullscreen></iframe>
+</div>
 
 ## Features
 
