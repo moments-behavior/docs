@@ -35,7 +35,8 @@ theme:
 
 nav:
   - Home: index.md
-  - Labeling 3D keypoints: walkthrough.md
+  - Tutorial:
+      - Labeling 3D keypoints: walkthrough.md
   - orange:
       - orange/index.md
       - Installation:

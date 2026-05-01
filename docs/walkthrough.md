@@ -102,11 +102,22 @@ cd ~/src/red/data_exporter
 conda activate red_exporter
 python red3d2jarvis.py \
     -p /path/to/red_labeling_example/demo \
-    -o /path/to/save_dir \
+    -o /path/to/rat_jarvis_dataset \
     -m 60
 ```
 
-`-m` is the bounding-box margin (in calibration units, typically mm). Adjust for the rat size.
+`-m` is the bounding-box margin in pixels.
+
+Once generated, you can check the dataset with:
+
+```bash
+cd ~/src/red/data_exporter
+conda activate red_exporter
+python check_jarvis_dataset.py \
+    -i /path/to/rat_jarvis_dataset
+```
+
+You can readjust the margin from the previous step to make sure the bounding box encloses the rat tightly.
 
 ---
 

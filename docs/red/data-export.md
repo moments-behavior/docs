@@ -73,7 +73,7 @@ python red3d2jarvis.py \
     [-e new_skeleton_edges]
 ```
 
-`project_path` is the `red` project folder — it should contain `labeled_data` and `project.redproj`.
+`project_path` is the `red` project folder — it should contain `labeled_data` and `project.redproj`. `margin_for_bbox` is in pixels.
 
 Verify the dataset:
 
