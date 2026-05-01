@@ -66,14 +66,14 @@ Result: pose dataset with normalized bboxes + keypoint coords, a `data.yaml` for
 
 ```bash
 python red3d2jarvis.py \
-    -w working_dir \
+    -p project_path \
     -o output_folder \
     -m margin_for_bbox \
     [-s subset_of_keypoint_indices] \
     [-e new_skeleton_edges]
 ```
 
-`working_dir` should contain `labeled_data` and `project.redproj`.
+`project_path` is the `red` project folder — it should contain `labeled_data` and `project.redproj`.
 
 Verify the dataset:
 
@@ -90,9 +90,10 @@ To visualize JARVIS predictions in `red`:
 ```bash
 python jarvis2red3d.py \
     -i /path/to/predictions_3D_folder/ \
-    -s [skeleton_name] \
-    -o [output_folder]
+    -p /path/to/red_project
 ```
+
+The converted predictions land in `<project>/predictions/`. Open the project in `red`, use **Load From Selected** to load the predictions, then scrub through the predicted poses across all views.
 
 A confidence filter is applied by default (drops predictions below 0.7 confidence and z > 500 mm). Disable with `--filter=0`.
 

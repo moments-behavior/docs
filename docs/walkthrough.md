@@ -1,4 +1,4 @@
-# Tutorial
+# Labeling 3D keypoints
 
 This page walks the post-recording side of the pipeline — calibration, labeling, training, and inference — using a 10-second sample from our 17-camera arena rig, so you can practice with real data without setting up your own cameras first. The output is a JARVIS-HybridNet 3D pose model for a freely-moving rat.
 
@@ -77,6 +77,9 @@ red_labeling_example/demo/
 
 Pick frames spaced across the 10-second clip. For each frame, click each keypoint in **at least 2 camera views**. `red` triangulates the 3D position automatically and projects it back into all 17 views.
 
+![label one frame](assets/tutorial_labeling/label_one_frame.png)
+
+
 With 17 cameras you don't need to label more than 2–3 views per keypoint — pick the views where the rat is least occluded for that frame.
 
 For a detailed walkthrough of labeling 24 keypoints on a rat, watch the video demo:
@@ -98,8 +101,8 @@ Use the JARVIS exporter from `red`'s `data_exporter/`. Full reference: [Data exp
 cd ~/src/red/data_exporter
 conda activate red_exporter
 python red3d2jarvis.py \
-    -w ~/red_labeling_example/demo \
-    -o ~/datasets/red_labeling_example_jarvis \
+    -p /path/to/red_labeling_example/demo \
+    -o /path/to/save_dir \
     -m 60
 ```
 
@@ -122,11 +125,10 @@ To visualize the predictions in `red`, convert them back with `jarvis2red3d.py`:
 ```bash
 python jarvis2red3d.py \
     -i /path/to/predictions_3D_folder/ \
-    -s arena \
-    -o /path/to/output_folder
+    -p /path/to/red_labeling_example/demo
 ```
 
-Then open the output folder in `red` and scrub through the predicted poses across all 17 views — useful for spot-checking and finding error frames to relabel.
+The converted predictions land in `<project>/predictions/` (e.g. `red_labeling_example/demo/predictions/`). Open the project in `red`, use **Load From Selected** to load the predictions, then scrub through the predicted poses across all 17 views — useful for spot-checking and finding error frames to relabel.
 
 A confidence filter is on by default (drops predictions below 0.7 confidence and z > 500 mm). Disable with `--filter=0`.
 
