@@ -35,6 +35,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Gallery: gallery.md
   - Tutorial:
       - Labeling 3D keypoints: walkthrough.md
   - orange:

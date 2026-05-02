@@ -28,7 +28,7 @@ A high-performance, GPU-accelerated multi-camera capture, streaming and recordin
 
 ## Performance
 
-Encoding performance using a **single** A6000 GPU with a 7MP Emergent camera:
+Encoding performance using a **single** A6000 GPU with 7MP Emergent cameras:
 
 ![encoding benchmark](../assets/encoding_benchmark.png)
 
