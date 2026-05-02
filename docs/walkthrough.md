@@ -123,14 +123,12 @@ You can readjust the margin from the previous step to make sure the bounding box
 
 ## 7. Train a JARVIS HybridNet model
 
-Follow the [JARVIS-HybridNet](https://github.com/JARVIS-MoCap/JARVIS-HybridNet) training docs for the basic flow. The notes below are about configuration choices the JARVIS prompts ask you to make — JARVIS's heuristics work for many setups, but they assume "whole-animal" scale and miss two things that matter for fine keypoint work: **how close together your closest keypoints are**, and **how big your animal actually is in its most extended pose**.
-
-`red3d2jarvis.py` prints a single block of training-config suggestions derived from your actual labels:
+Follow the [JARVIS-HybridNet](https://github.com/JARVIS-MoCap/JARVIS-HybridNet) training docs for the basic flow. JARVIS's built-in heuristics for sigma, grid, cube size, and CenterDetect input size assume "whole-animal" scale and are often wrong for fine keypoint work. `red3d2jarvis.py` prints data-driven suggestions instead:
 
 ```
 === JARVIS training-config suggestions ===
 3D label extent (max axis span per frame, mm): median=341, p95=396, p99=400, max=402
-HYBRIDNET.ROI_CUBE_SIZE (20% margin over max):
+HYBRIDNET.ROI_CUBE_SIZE (1.20 x max axis span, no dropped frames):
   for GRID_SPACING=4: 496 mm
   for GRID_SPACING=6: 504 mm
   for GRID_SPACING=8: 512 mm
@@ -146,42 +144,19 @@ HYBRIDNET.GRID_SPACING: 4 mm, ~6.2px  (sigma / 2; finer = better localization, ~
 CENTERDETECT.IMAGE_SIZE: 448  (smallest animal at CD input = 35 px; >= 32 px reliable. JARVIS uses non-uniform stretch resize, so this checks the worst-squashed axis.)
 ```
 
-> **When closely-spaced keypoints force impractical values:** if your skeleton has any keypoint pair only a few mm apart, the literal sigma/grid suggestion can demand a sub-mm voxel grid (tens of millions of voxels) that won't fit on most GPUs. Whenever the suggested grid drops below 3 mm, the exporter prints a `WARN` block explaining the tradeoff and offering practical alternatives (use coarser values, drop one of the close pair, or merge them).
+What each value means:
 
-Below is what each suggestion means and when to override it.
+- **`HYBRIDNET.GT_SIGMA_MM`** — Gaussian width for the 3D keypoint heatmap. Half the closest-pair distance, so the network can distinguish adjacent keypoints. Override upward only if training converges too slowly.
+- **`HYBRIDNET.GRID_SPACING`** — voxel resolution. Sigma/2, so the Gaussian is well-sampled. Halving multiplies HybridNet memory by ~8×; bump back up if GPU memory is tight.
+- **`HYBRIDNET.ROI_CUBE_SIZE`** — 3D volume the model predicts in. Pick the row matching your `GRID_SPACING` (must be divisible by `4 × GRID_SPACING`). JARVIS silently drops any training frame whose 3D extent exceeds the cube; our patched JARVIS prints a warning instead.
+- **`CENTERDETECT.IMAGE_SIZE`** — input resolution for CenterDetect's 2D animal-localization stage. Smallest multiple-of-64 that keeps the smallest animal above 32 px on the worst-squashed axis (JARVIS uses non-uniform stretch resize). Independent of `KEYPOINTDETECT.BOUNDING_BOX_SIZE`.
 
-### `HYBRIDNET.GT_SIGMA_MM` — Gaussian width for keypoint heatmaps
-
-Sigma is suggested as **half the closest pairwise distance between any two keypoints in your labels** (median across frames).
-
-JARVIS's built-in heuristic suggests 10 % of the cube size, which is fine for sparse keypoints but blurs together close ones (e.g. rat wrist + hand at ~10–15 mm apart get smeared by a 50 mm sigma). The exporter's data-driven suggestion gives a value that lets the network distinguish the closest pair.
-
-Override only if the model converges too slowly — bump up incrementally.
-
-### `HYBRIDNET.GRID_SPACING` — 3D voxel resolution
-
-Suggested as **sigma / 2**, so the Gaussian is sampled by ~3–5 voxels across its full-width-half-max — fine enough to actually use the precision sigma allows.
-
-JARVIS's own suggestion uses `max(round(sigma/3), round(bbox/85))`, which often picks a coarser value than you want for dense keypoints because the bbox term dominates.
-
-Halving grid spacing multiplies HybridNet memory by ~8×, so if GPU memory is tight during training, bump it back up.
-
-### `HYBRIDNET.ROI_CUBE_SIZE` — 3D volume the model predicts in
-
-JARVIS's `Dataset3D` drops any training frame whose 3D keypoint extent exceeds `ROI_CUBE_SIZE`. With our patched JARVIS this prints a warning summarizing how many frames were dropped and the largest dropped extent — but if you're running upstream JARVIS, it happens silently.
-
-The exporter prints one suggestion per common grid spacing (4 / 6 / 8 mm) — pick the row matching the `GRID_SPACING` you chose. Each value is `max_extent × 1.20`, rounded up to the next multiple of `4 × GRID_SPACING` (a JARVIS hard requirement; the trainer refuses to start otherwise). For other grid spacings, round up to the next multiple of `4 × GRID_SPACING` yourself.
-
-### `CENTERDETECT.IMAGE_SIZE` — CenterDetect input resolution
-
-CenterDetect runs on a downsampled square (default 320×320) of each camera image to find the animal's 2D center. JARVIS does a **non-uniform stretch resize** (each axis squashed independently) so for non-square cameras the bbox ends up distorted. If the animal is too small at that resolution, centroid detection becomes unreliable and you get bad crops for KeypointDetect.
-
-The exporter prints the smallest `IMAGE_SIZE` (multiple of 64) that keeps the smallest animal in your dataset above 32 px on the worst-squashed axis. Use that value directly. The check is about CenterDetect's animal-localization reliability only — `KEYPOINTDETECT.BOUNDING_BOX_SIZE` is a separate parameter for the keypoint regression crop and is unaffected.
+> **WARN block:** if your skeleton has any keypoint pair only a few mm apart, the literal sigma/grid suggestion can demand a 1–2 mm voxel grid (tens of millions of voxels in a typical cube) that won't fit on most GPUs. When the suggested grid drops below 3 mm, the exporter prints a `WARN` with practical alternatives (use coarser values, drop one of the close pair, or merge them).
 
 ### Other config notes
 
-- **`HYBRIDNET.BATCH_SIZE`** is typically `1` because the volumetric stage is memory-heavy. With batch 1, **drop `MAX_LEARNING_RATE` to ~`0.001`** for HybridNet (keep CenterDetect/KeypointDetect at `0.003`); high LR with tiny batch destabilizes training.
-- **Watch val curves early.** With 36 val frames (typical 18 % of 200 labeled), per-epoch metrics are noisy — don't over-react to single-epoch swings. Expect plateauing well before the configured epoch budget; pull the best checkpoint by val loss rather than the last one.
+- **`HYBRIDNET.BATCH_SIZE: 1`** is forced by memory; drop **`MAX_LEARNING_RATE` to ~`0.001`** for HybridNet to compensate (high LR + tiny batch destabilizes training). CenterDetect/KeypointDetect can stay at `0.003`.
+- With ~36 val frames, per-epoch val metrics are noisy. Expect plateauing well before the configured epoch budget — pull the best checkpoint by val loss, not the last one.
 
 ### Reference config
 
