@@ -6,7 +6,7 @@ Tools for high-throughput, time-synchronized multi-camera recording and labeling
 
 ## Why we built these
 
-The starting point was a research goal: tracking a freely-moving animal in 3D, at high resolution and high frame rate, in a large arena. Covering that volume (and seeing fine details of the animals) takes many cameras. Recording animals for long sessions takes compressed video written to disk in real time. Both demands force the system to scale — every part of the pipeline has to keep up as you add cameras.
+The starting point was a research goal: tracking a freely-moving animal in 3D, at high resolution and high frame rate, in a large arena. Covering that volume (and seeing fine details of the animal) takes many cameras. Recording animals for long sessions takes compressed video written to disk in real time. Both demands force the system to scale — every part of the pipeline has to keep up as you add cameras.
 
 That constraint shaped **`orange`**, which uses GPU-accelerated encoding: the GPU handles H.264/HEVC compression, the CPU never becomes the bottleneck, and adding GPUs is the path to handling more cameras or higher resolution. Cameras connect over Ethernet — growing the rig is mostly a wiring problem. Because frames stay on the GPU throughout the pipeline, plugging in deep learning models is easy — a YOLO detector, for instance, can find an animal in real time during recording. PTP runs over the same switches and keeps every camera synchronized to sub-frame precision. The same design works for four cameras on one host or many cameras spread across a rig of hosts.
 
