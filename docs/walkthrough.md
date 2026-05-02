@@ -155,7 +155,7 @@ What each value means:
 
 ### Reference config
 
-Tested for the 17-camera Rat22 example (200 labeled frames, train/val/test = 144/36/20):
+Tested for the 17-camera Rat22 example (200 labeled frames, train/val/test = 144/36/20). `KEYPOINT_NAMES` and `SKELETON` sections are omitted — JARVIS auto-generates them from your dataset when the project is created.
 
 ```yaml
 DATALOADER_NUM_WORKERS: 8
@@ -166,7 +166,7 @@ CENTERDETECT:
   MODEL_SIZE: medium
   BATCH_SIZE: 4
   MAX_LEARNING_RATE: 0.003
-  NUM_EPOCHS: 50
+  NUM_EPOCHS: 80
   IMAGE_SIZE: 448
   VAL_INTERVAL: 5
   CHECKPOINT_SAVE_INTERVAL: 10
