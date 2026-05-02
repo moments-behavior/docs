@@ -69,19 +69,31 @@ python red3d2jarvis.py \
     -p project_path \
     -o output_folder \
     -m margin_for_bbox \
+    [--train_ratio 0.8] \
+    [--test_ratio 0.0] \
+    [--seed 42] \
     [-s subset_of_keypoint_indices] \
     [-e new_skeleton_edges]
 ```
 
-`project_path` is the `red` project folder — it should contain `labeled_data` and `project.redproj`. `margin_for_bbox` is in pixels.
+| Arg               | Description                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `-p, --project_dir` | `red` project folder — must contain `labeled_data` and `project.redproj`.  |
+| `-o, --output_folder` | Where the JARVIS dataset goes.                                           |
+| `-m, --margin`    | Bounding-box margin in **pixels** added on each side of the projected keypoints. |
+| `--train_ratio`   | Fraction of (non-test) data used for training. Default `0.8`. Rest goes to val. |
+| `-t, --test_ratio` | Fraction held out as a test set. Default `0.0` (no test set). When `> 0`, produces `instances_test.json` + `test_frames.json` in the output folder. JARVIS itself only uses train + val; the test set is for separate evaluation. |
+| `--seed`          | Random seed for the train/val/test shuffle. Default `42`.                    |
+| `-s, --select_indices` | Optional list of keypoint indices to keep (e.g. `-s 0 1 2 3`).          |
+| `-e, --edges`     | Optional new edge pairs when subsetting keypoints.                           |
 
-Verify the dataset:
+After export, the script prints a **training-config suggestions** block derived from your labels — recommended values for `HYBRIDNET.ROI_CUBE_SIZE`, `GT_SIGMA_MM`, `GRID_SPACING`, and `CENTERDETECT.IMAGE_SIZE`, plus the closest-pair keypoint distribution. See the [tutorial](../walkthrough.md#7-train-a-jarvis-hybridnet-model) for how to interpret each value.
+
+Verify the dataset visually:
 
 ```bash
-python check_jarvis_dataset.py -i jarvis_dataset [-s train/valid]
+python check_jarvis_dataset.py -i jarvis_dataset [-s train/val/test]
 ```
-
-If your skeleton isn't in `keypoints.py`, add it manually for now.
 
 ### Load JARVIS predictions back into red
 
