@@ -16,7 +16,7 @@ The labeling side, **`red`**, came out of a gap. Once we had synchronized record
 
 ### [orange](orange/index.md)
 
-GPU-accelerated multi-camera capture, streaming and recording for Emergent GigE Vision cameras. Single-host or multi-host capture with PTP synchronization and optional real-time YOLO detection.
+GPU-accelerated multi-camera capture, streaming and recording for Emergent Vision GigE cameras. Single-host or multi-host capture with PTP synchronization and optional real-time YOLO detection.
 
 [Documentation →](orange/index.md) · [Source](https://github.com/moments-behavior/orange)
 
