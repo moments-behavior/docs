@@ -153,11 +153,6 @@ What each value means:
 
 > **WARN block:** if your skeleton has any keypoint pair only a few mm apart, the literal sigma/grid suggestion can demand a 1–2 mm voxel grid (tens of millions of voxels in a typical cube) that won't fit on most GPUs. When the suggested grid drops below 3 mm, the exporter prints a `WARN` with practical alternatives (use coarser values, drop one of the close pair, or merge them).
 
-### Other config notes
-
-- **`HYBRIDNET.BATCH_SIZE: 1`** is forced by memory; drop **`MAX_LEARNING_RATE` to ~`0.001`** for HybridNet to compensate (high LR + tiny batch destabilizes training). CenterDetect/KeypointDetect can stay at `0.003`.
-- With ~36 val frames, per-epoch val metrics are noisy. Expect plateauing well before the configured epoch budget — pull the best checkpoint by val loss, not the last one.
-
 ### Reference config
 
 Tested for the 17-camera Rat22 example (200 labeled frames, train/val/test = 144/36/20):
