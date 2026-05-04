@@ -69,7 +69,7 @@ python red3d2jarvis.py \
     -p project_path \
     -o output_folder \
     -m margin_for_bbox \
-    [--train_ratio 0.8] \
+    [--train_ratio 0.9] \
     [--test_ratio 0.0] \
     [--seed 42] \
     [-s subset_of_keypoint_indices] \
@@ -81,7 +81,7 @@ python red3d2jarvis.py \
 | `-p, --project_dir` | `red` project folder — must contain `labeled_data` and `project.redproj`.  |
 | `-o, --output_folder` | Where the JARVIS dataset goes.                                           |
 | `-m, --margin`    | Bounding-box margin in **pixels** added on each side of the projected keypoints. |
-| `--train_ratio`   | Fraction of (non-test) data used for training. Default `0.8`. Rest goes to val. |
+| `--train_ratio`   | Fraction of (non-test) data used for training. Default `0.9`. Rest goes to val. |
 | `-t, --test_ratio` | Fraction held out as a test set. Default `0.0` (no test set). When `> 0`, produces `instances_test.json` + `test_frames.json` in the output folder. JARVIS itself only uses train + val; the test set is for separate evaluation. |
 | `--seed`          | Random seed for the train/val/test shuffle. Default `42`.                    |
 | `-s, --select_indices` | Optional list of keypoint indices to keep (e.g. `-s 0 1 2 3`).          |

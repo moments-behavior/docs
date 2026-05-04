@@ -2,14 +2,17 @@
 
 Examples of recordings, labeling, and 3D pose tracking with `orange` + `red` across different species and rig setups.
 
+> **Tip:** for the best viewing experience, click the YouTube gear icon (⚙) on each video and select **2160p (4K)**. YouTube auto-selects a lower resolution by default.
+
 ---
 
 ## Rat
 
-> *TODO: short caption — rig setup (e.g. 17-camera arena), arena size, frame rate, what's being tracked (e.g. 22-keypoint body pose), reference to associated paper or project if any.*
+
+Rat rig with 17 cameras recorded at 180fps, played back at 3x slower. 
 
 <div style="position: relative; padding-bottom: 56.25%; height: 0;">
-  <iframe src="https://www.youtube.com/embed/REPLACE_WITH_VIDEO_ID"
+  <iframe src="https://www.youtube.com/embed/yOMQTXvMnAU"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
     frameborder="0" allowfullscreen></iframe>
 </div>
@@ -23,10 +26,10 @@ Examples of recordings, labeling, and 3D pose tracking with `orange` + `red` acr
 
 ## Fly
 
-> *TODO: short caption — rig setup, frame rate, what's being tracked.*
+Fly rig with 7 cameras recorded at 800fps, played back at 13x slower.
 
 <div style="position: relative; padding-bottom: 56.25%; height: 0;">
-  <iframe src="https://www.youtube.com/embed/REPLACE_WITH_VIDEO_ID"
+  <iframe src="https://www.youtube.com/embed/W4z_k2X5nKk"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
     frameborder="0" allowfullscreen></iframe>
 </div>
@@ -35,10 +38,10 @@ Examples of recordings, labeling, and 3D pose tracking with `orange` + `red` acr
 
 ## Mouse
 
-> *TODO: short caption — rig setup, frame rate, what's being tracked.*
+Mouse rig with 16 cameras recorded at 180fps, played back at 3× slower. 
 
 <div style="position: relative; padding-bottom: 56.25%; height: 0;">
-  <iframe src="https://www.youtube.com/embed/REPLACE_WITH_VIDEO_ID"
+  <iframe src="https://www.youtube.com/embed/NI8g3t6DGgY"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
     frameborder="0" allowfullscreen></iframe>
 </div>

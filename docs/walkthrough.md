@@ -155,7 +155,7 @@ What each value means:
 
 ### Reference config
 
-Tested for the 17-camera Rat22 example (200 labeled frames, train/val/test = 144/36/20). `KEYPOINT_NAMES` and `SKELETON` sections are omitted — JARVIS auto-generates them from your dataset when the project is created.
+Tested for the 17-camera Rat22 example (200 labeled frames, train/val/test = 162/18/20). `KEYPOINT_NAMES` and `SKELETON` sections are omitted — JARVIS auto-generates them from your dataset when the project is created.
 
 ```yaml
 DATALOADER_NUM_WORKERS: 8
