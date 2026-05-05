@@ -14,7 +14,7 @@ This page walks the post-recording side of the pipeline — calibration, labelin
 
 ## 2. Get the sample data
 
-> *TODO: download URL for the 10-second 17-camera arena sample.*
+Download: [17-camera arena sample (figshare)](https://doi.org/10.6084/m9.figshare.32163204).
 
 The sample bundle contains:
 
@@ -123,28 +123,11 @@ You can readjust the margin from the previous step to make sure the bounding box
 
 ## 7. Train a JARVIS HybridNet model
 
-Follow the [JARVIS-HybridNet](https://github.com/JARVIS-MoCap/JARVIS-HybridNet) training docs for the basic flow. JARVIS's built-in heuristics for sigma, grid, cube size, and CenterDetect input size assume "whole-animal" scale and are often wrong for fine keypoint work. `red3d2jarvis.py` prints data-driven suggestions instead:
+> **Units:** all 3D distances below (`GT_SIGMA_MM`, `GRID_SPACING`, `ROI_CUBE_SIZE`) follow your camera calibration units. The `_MM` suffix is a naming convention — JARVIS just multiplies through whatever your calibration provides. We assume mm throughout this walkthrough; if you calibrated in different units, scale accordingly.
 
-```
-=== JARVIS training-config suggestions ===
-3D label extent (max axis span per frame, mm): median=341, p95=396, p99=400, max=402
-HYBRIDNET.ROI_CUBE_SIZE (1.20 x max axis span, no dropped frames):
-  for GRID_SPACING=4: 496 mm
-  for GRID_SPACING=6: 504 mm
-  for GRID_SPACING=8: 512 mm
+Follow the [JARVIS-HybridNet](https://github.com/JARVIS-MoCap/JARVIS-HybridNet) training docs for the basic flow. JARVIS's built-in heuristics for sigma, grid, cube size, and CenterDetect input size assume "whole-animal" scale and are often wrong for fine keypoint work. `red3d2jarvis.py` prints data-driven suggestions for the four values that matter most:
 
-Closest-pair distribution (median across frames):
-  #1:  18.9 mm  (AnkleR <-> FootR)
-  #2:  19.7 mm  (AnkleL <-> FootL)
-  #3:  23.9 mm  (Neck <-> ShoulderL)
-  #4:  24.3 mm  (EarR <-> ShoulderR)
-  #5:  24.5 mm  (Neck <-> ShoulderR)
-HYBRIDNET.GT_SIGMA_MM:  9 mm, ~13.9px  (closest-pair / 2)
-HYBRIDNET.GRID_SPACING: 4 mm, ~6.2px  (sigma / 2; finer = better localization, ~8x memory per halving)
-CENTERDETECT.IMAGE_SIZE: 448  (smallest animal at CD input = 35 px; >= 32 px reliable. JARVIS uses non-uniform stretch resize, so this checks the worst-squashed axis.)
-```
-
-What each value means:
+> **Note:** `HYBRIDNET.GT_SIGMA_MM` only takes effect in our patched fork — [JohnsonLabJanelia/JARVIS-HybridNet](https://github.com/JohnsonLabJanelia/JARVIS-HybridNet). With upstream JARVIS-MoCap, the value in the config below has **no effect** — sigma is hardcoded to `1.7 × GRID_SPACING × 2 mm`.
 
 - **`HYBRIDNET.GT_SIGMA_MM`** — Gaussian width for the 3D keypoint heatmap. Half the closest-pair distance, so the network can distinguish adjacent keypoints. Override upward only if training converges too slowly.
 - **`HYBRIDNET.GRID_SPACING`** — voxel resolution. Sigma/2, so the Gaussian is well-sampled. Halving multiplies HybridNet memory by ~8×; bump back up if GPU memory is tight.
@@ -155,7 +138,7 @@ What each value means:
 
 ### Reference config
 
-Tested for the 17-camera Rat22 example (200 labeled frames, train/val/test = 162/18/20). `KEYPOINT_NAMES` and `SKELETON` sections are omitted — JARVIS auto-generates them from your dataset when the project is created.
+Tested for the 17-camera Rat24 example (540 labeled frames, train/val/test = 437/49/54). `KEYPOINT_NAMES` and `SKELETON` sections are omitted — JARVIS auto-generates them from your dataset when the project is created.
 
 ```yaml
 DATALOADER_NUM_WORKERS: 8
@@ -166,7 +149,7 @@ CENTERDETECT:
   MODEL_SIZE: medium
   BATCH_SIZE: 4
   MAX_LEARNING_RATE: 0.003
-  NUM_EPOCHS: 80
+  NUM_EPOCHS: 50
   IMAGE_SIZE: 448
   VAL_INTERVAL: 5
   CHECKPOINT_SAVE_INTERVAL: 10
@@ -175,8 +158,8 @@ KEYPOINTDETECT:
   BATCH_SIZE: 4
   MAX_LEARNING_RATE: 0.003
   NUM_EPOCHS: 100
-  BOUNDING_BOX_SIZE: 1216
-  NUM_JOINTS: 22
+  BOUNDING_BOX_SIZE: 1152
+  NUM_JOINTS: 24
   VAL_INTERVAL: 5
   CHECKPOINT_SAVE_INTERVAL: 10
 HYBRIDNET:
@@ -186,7 +169,7 @@ HYBRIDNET:
   NUM_CAMERAS: 17
   ROI_CUBE_SIZE: 512
   GRID_SPACING: 4
-  GT_SIGMA_MM: 8.0
+  GT_SIGMA_MM: 9.0
   VAL_INTERVAL: 5
   CHECKPOINT_SAVE_INTERVAL: 10
 ```
