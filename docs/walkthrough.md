@@ -18,9 +18,9 @@ Download: [17-camera arena sample (figshare)](https://doi.org/10.6084/m9.figshar
 
 The sample bundle contains:
 
-- 17 short `.mp4` recordings (one per camera) plus per-camera meta CSVs
+- 17 short `.mp4` recordings (one per camera) under `movies/`
 - Camera calibration files (`calibration/`) — intrinsics + extrinsics
-- A starter `skeleton.json` for the rat keypoint set used in this walkthrough
+- A red project (`demo/`) with labeled data — one timestamped snapshot under `demo/labeled_data/` (per-camera 2D CSVs + `keypoints3d.csv`).
 
 Layout after unpacking:
 
@@ -28,10 +28,16 @@ Layout after unpacking:
 red_labeling_example/
 ├── calibration/
 │   ├── <serial-1>.yaml
-│   ├── ...
+│   └── ...
 ├── movies/
 │   ├── Cam<serial-1>.mp4
 │   └── ...
+└── demo/
+    └── labeled_data/
+        └── 2026_04_30_21_39_32/
+            ├── Cam<serial-1>.csv
+            ├── ...
+            └── keypoints3d.csv
 ```
 
 ---
@@ -65,15 +71,20 @@ Click **Create Project**. It creates a folder with the Project Name inside Full 
 
 ```
 red_labeling_example/demo/
-├── labeled_data
-└── project.redproj
+├── labeled_data/
+│   └── 2026_04_30_21_39_32/   ← from the figshare bundle (ground-truth labels)
+└── project.redproj             ← created by red just now
 ```
+
+If you unpacked the bundle into `red_labeling_example/`, the `demo/labeled_data/` folder already exists with one timestamped snapshot of pre-labeled frames. red's **Create Project** writes `project.redproj` alongside it without touching the existing labels — that's intentional, you'll use those labels in §6.
 
 `project.redproj` is a JSON file containing the project's metadata (calibration folder, skeleton, etc.). Double-clicking it opens the project and reloads the videos and most recently labeled frames — provided `red` was installed via the [desktop launcher](red/installation/build.md#optional-install-a-desktop-launcher).
 
 ---
 
 ## 5. Label 3D rat poses
+
+> **Skip ahead:** the figshare bundle already includes 540 ground-truth labels under `demo/labeled_data/2026_04_30_21_39_32/`. If you just want to run the rest of the pipeline end-to-end, jump straight to §6. Use this section only if you want to practice the labeling workflow on top of (or instead of) the shipped labels — `red` will save your work as a new timestamped snapshot under `labeled_data/`.
 
 Pick frames spaced across the 10-second clip. For each frame, click each keypoint in **at least 2 camera views**. `red` triangulates the 3D position automatically and projects it back into all 17 views.
 
@@ -127,16 +138,16 @@ You can readjust the margin from the previous step to make sure the bounding box
 
 Follow the [JARVIS-HybridNet](https://github.com/JARVIS-MoCap/JARVIS-HybridNet) training docs for the basic flow. JARVIS's built-in heuristics for sigma, grid, cube size, and CenterDetect input size assume "whole-animal" scale and are often wrong for fine keypoint work. `red3d2jarvis.py` prints data-driven suggestions for the four values that matter most:
 
-> **Note:** `HYBRIDNET.GT_SIGMA_MM` only takes effect in our patched fork — [JohnsonLabJanelia/JARVIS-HybridNet](https://github.com/JohnsonLabJanelia/JARVIS-HybridNet). With upstream JARVIS-MoCap, the value in the config below has **no effect** — sigma is hardcoded to `1.7 × GRID_SPACING × 2 mm`.
-
 - **`HYBRIDNET.GT_SIGMA_MM`** — Gaussian width for the 3D keypoint heatmap. Half the closest-pair distance, so the network can distinguish adjacent keypoints. Override upward only if training converges too slowly.
 - **`HYBRIDNET.GRID_SPACING`** — voxel resolution. Sigma/2, so the Gaussian is well-sampled. Halving multiplies HybridNet memory by ~8×; bump back up if GPU memory is tight.
 - **`HYBRIDNET.ROI_CUBE_SIZE`** — 3D volume the model predicts in. Pick the row matching your `GRID_SPACING` (must be divisible by `4 × GRID_SPACING`). JARVIS silently drops any training frame whose 3D extent exceeds the cube; our patched JARVIS prints a warning instead.
 - **`CENTERDETECT.IMAGE_SIZE`** — input resolution for CenterDetect's 2D animal-localization stage. Smallest multiple-of-64 that keeps the smallest animal above 32 px on the worst-squashed axis (JARVIS uses non-uniform stretch resize). Independent of `KEYPOINTDETECT.BOUNDING_BOX_SIZE`.
 
-> **WARN block:** if your skeleton has any keypoint pair only a few mm apart, the literal sigma/grid suggestion can demand a 1–2 mm voxel grid (tens of millions of voxels in a typical cube) that won't fit on most GPUs. When the suggested grid drops below 3 mm, the exporter prints a `WARN` with practical alternatives (use coarser values, drop one of the close pair, or merge them).
+If your skeleton has any keypoint pair only a few mm apart, `red3d2jarvis.py` prints a runtime `WARN` with practical alternatives — the literal sigma/grid suggestion can demand a 1–2 mm voxel grid (tens of millions of voxels in a typical cube) that won't fit on most GPUs.
 
 ### Reference config
+
+> **Note:** `HYBRIDNET.GT_SIGMA_MM` only takes effect in our patched fork — [JohnsonLabJanelia/JARVIS-HybridNet](https://github.com/JohnsonLabJanelia/JARVIS-HybridNet). With upstream JARVIS-MoCap, the value below has **no effect** — sigma is hardcoded to `1.7 × GRID_SPACING × 2 mm`.
 
 Tested for the 17-camera Rat24 example (540 labeled frames, train/val/test = 437/49/54). `KEYPOINT_NAMES` and `SKELETON` sections are omitted — JARVIS auto-generates them from your dataset when the project is created.
 
@@ -190,7 +201,7 @@ python jarvis2red3d.py \
 
 The converted predictions land in `<project>/predictions/` (e.g. `red_labeling_example/demo/predictions/`). Open the project in `red`, use **Load From Selected** to load the predictions, then scrub through the predicted poses across all 17 views — useful for spot-checking and finding error frames to relabel.
 
-A confidence filter is on by default (drops predictions below 0.7 confidence and z > 500 mm). Disable with `--filter=0`.
+A confidence filter is on by default (drops predictions below 0.7 confidence and z > 500 mm). The z cutoff is tuned for our rat arena (calibration origin near the floor); on a different rig you may need to adjust the cutoff or disable it entirely with `--filter=0`, otherwise predictions outside the assumed z range will silently disappear.
 
 ---
 
